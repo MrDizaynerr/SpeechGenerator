@@ -164,4 +164,40 @@ def soglas_phrase():
 
 
 def uprav_phrase():
-    temp = verbs_bank+adjfs_bank+nouns_bank+advbs_bank+numbs_bank
+    temp = verbs_bank+nouns_bank+advbs_bank+numbs_bank
+    res = ''
+    last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+    res += last_word
+    if morpher.parse(last_word)[0].tag.POS in ['INFN', 'VERB']:
+        temp = preps_bank + prcls_bank+ nouns_bank
+        last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+        res += ' ' + last_word
+        if morpher.parse(last_word)[0].tag.POS in ['PREP','PRCL','INTJ']:
+            temp = nouns_bank
+            last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+            res += ' ' + last_word
+        brkn = res.split()
+        res = ''
+        temp = morpher.parse(brkn[-1])[0]
+        last_word = temp.inflect({r.choice(['ablt','accs']), morpher.parse(last_word)[0].tag.number})[0]
+        brkn[-1] = last_word
+        res == ''
+        for i in brkn:
+            res += i + ' '
+    if morpher.parse(last_word)[0].tag.POS in ['NOUN','NPRO']:
+        temp = nouns_bank + preps_bank
+        last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+        res += ' ' + last_word
+        if morpher.parse(last_word)[0].tag.POS == 'PREP':
+            temp = nouns_bank
+            last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+            res += ' ' + last_word
+        brkn = res.split()
+        res = ''
+        temp = morpher.parse(brkn[-1])[0]
+        brkn[-1] = temp.inflect({'gent'})[0]
+        for i in brkn:
+            res += i + ' '
+    return res
+
+print(uprav_phrase())
