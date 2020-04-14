@@ -44,12 +44,7 @@ def contain(a,lst):
     return False
 
 def lastword(wrd):
-    i = len(wrd)-1
-    res = ''
-    while wrd[i]!=' ':
-        res+=wrd[i]
-    res = reversed(res)
-    return res
+    return wrd.split()[-1]
 
 NOUN_bank = [x for x in word_bank if morpher.parse(x)[0].tag.POS == 'NOUN']  # имя существительное	            хомяк
 ADJF_bank = [x for x in word_bank if morpher.parse(x)[0].tag.POS == 'ADJF']  # имя прилагательное (полное)	    хороший
@@ -98,6 +93,7 @@ POSes_weights = [nouns_bank_weight,adjfs_bank_weight,verbs_bank_weight,advbs_ban
                  npros_bank_weight,preps_bank_weight,prcls_bank_weight]
 POSes_weights = [sum(x) for x in POSes_weights]
 
+"""
 def generate_sample_phrase():
     res = ''
     temp = ''
@@ -132,5 +128,40 @@ def generate_sample_phrase():
         res += ' ' + r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
         res += ' ' + r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
     #print(res)
-    return res
+    return res"""
+#print('checkpoint')
+def soglas_phrase():
+    #print('incheck 0')
+    res = ''
 
+    temp = adjfs_bank
+    last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+    res += ' ' + last_word
+
+    #print('incheck 1',res)
+
+    temp = nouns_bank + preps_bank
+    last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+    res += ' ' + last_word
+
+    #print('incheck 2',res)
+    if morpher.parse(last_word)[0].tag.POS == 'PREP':
+        temp = nouns_bank
+        res += ' ' + r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+        #print('incheck (3)')
+    res = res.upper()
+    temp = res.split()
+    last_word = temp[-1]
+    morfed = morpher.parse(temp[0])[0]
+    try:
+        temp[0] = morfed.inflect({morpher.parse(last_word)[0].tag.number,morpher.parse(last_word)[0].tag.gender,morpher.parse(last_word)[0].tag.case})[0]
+        res = ''
+        for i in temp:
+            res += i + ' '
+        return res
+    except:
+        return res.lstrip(' ')
+
+
+def uprav_phrase():
+    temp = verbs_bank+adjfs_bank+nouns_bank+advbs_bank+numbs_bank
