@@ -43,6 +43,13 @@ def contain(a,lst):
                 return True
     return False
 
+def lastword(wrd):
+    i = len(wrd)-1
+    res = ''
+    while wrd[i]!=' ':
+        res+=wrd[i]
+    res = reversed(res)
+    return res
 
 NOUN_bank = [x for x in word_bank if morpher.parse(x)[0].tag.POS == 'NOUN']  # имя существительное	            хомяк
 ADJF_bank = [x for x in word_bank if morpher.parse(x)[0].tag.POS == 'ADJF']  # имя прилагательное (полное)	    хороший
@@ -91,4 +98,39 @@ POSes_weights = [nouns_bank_weight,adjfs_bank_weight,verbs_bank_weight,advbs_ban
                  npros_bank_weight,preps_bank_weight,prcls_bank_weight]
 POSes_weights = [sum(x) for x in POSes_weights]
 
+def generate_sample_phrase():
+    res = ''
+    temp = ''
+    temp_pos = ''
+    temp = r.choices(parts_of_speech,weights=POSes_weights)[0]
+    temp_pos = morpher.parse(temp[0])[0].tag.POS
+    while temp_pos == 'PRCL' or temp_pos == 'INTJ':
+        temp = r.choices(parts_of_speech, weights=POSes_weights)[0]
+        temp_pos = morpher.parse(temp[0])[0].tag.POS
+    res += r.choices(temp,weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+    #print(res,temp_pos)
+    if temp_pos in ['NOUN', 'NPRO']:
+        if temp_pos == 'PREP':
+            temp = preps_bank
+            res += ' ' + r.choices(temp,weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+            temp = nouns_bank
+            res += ' ' + r.choices(temp,weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+        else:
+            temp = verbs_bank+adjfs_bank
+            res += ' ' + r.choices(temp,weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+    elif temp_pos in ['ADJF', 'ADJS', 'PRTF', 'PRTS']:
+        temp = nouns_bank
+        res += ' ' + r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+    elif temp_pos in ['VERB', 'INFN', 'GRND']:
+        temp = nouns_bank + advbs_bank + preps_bank
+        res += ' ' + r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+        if morpher.parse(lastword(res))[0].tag.POS == 'PREP':
+            temp = nouns_bank
+            res += ' ' + r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+    elif temp_pos in ['PREP']:
+        temp_pos = nouns_bank+adjfs_bank
+        res += ' ' + r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+        res += ' ' + r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+    #print(res)
+    return res
 
