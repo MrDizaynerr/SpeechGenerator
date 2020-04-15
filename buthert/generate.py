@@ -278,17 +278,49 @@ def generate_full_sentense(leng):
     cnt = 0
     while cnt<leng:
         for i in range(len(res)):
-            res[i] = r.choice(mores)(res[i])
-            mdl = []
-            for i in res:
-                mdl+=i.split()
-            res = mdl
+            if r.choice([True,False]):
+                res[i] = r.choices(mores,weights=[10,8,6])[0](res[i])
+                mdl = []
+                for i in res:
+                    mdl+=i.split()
+                res = mdl
         cnt = len(res)
     return fill(res).upper().lstrip(' ')
 
-size = r.randint(5,10)
-for i in range(size):
-    print(generate_full_sentense(r.randint(1,7)))
-    if not i == size-1:
-        print('@')
 
+def fix_sentense(snt):
+    temp = snt.split()
+    for i in range(1,len(temp)):
+        try:
+            temp[i] = morpher.parse(temp[i])[0].inflect({morpher.parse(temp[i-1])[0].tag.case})[0]
+        except: None
+        try:
+            temp[i] = morpher.parse(temp[i])[0].inflect({morpher.parse(temp[i-1])[0].tag.number})[0]
+        except: None
+        try:
+            temp[i] = morpher.parse(temp[i])[0].inflect({morpher.parse(temp[i-1])[0].tag.gender})[0]
+        except: None
+        try:
+            temp[i] = morpher.parse(temp[i])[0].inflect({morpher.parse(temp[i-1])[0].tag.case})[0]
+        except: None
+        if temp[i-1].upper() in ["НА","О","В","ОБ","ОБО","ПРИ","ПО"]:
+            try:
+                temp[i] = morpher.parse(temp[i])[0].inflect({'loct'})[0]
+            except: None
+        elif temp[i-1].upper() in ["ЗА","НАД","ПОД","ПЕРЕД","С"]:
+            try:
+                temp[i] = morpher.parse(temp[i])[0].inflect({'ablt'})[0]
+            except: None
+    return fill(temp)
+
+size = r.randint(5,10)
+for m in range(size):
+    sntns = generate_full_sentense(r.randint(1,7))
+    sntns = fix_sentense(sntns).upper()
+    sidsnts = sntns.split()
+    for i in range(len(sidsnts)):
+        if morpher.parse(sidsnts[i])[0].tag.POS == 'CONJ':
+            sidsnts[i-1] += ','
+    print(fill(sidsnts).lstrip(' '))
+    if m != size-1:
+        print('@')
