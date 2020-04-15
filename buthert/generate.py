@@ -93,6 +93,12 @@ POSes_weights = [nouns_bank_weight,adjfs_bank_weight,verbs_bank_weight,advbs_ban
                  npros_bank_weight,preps_bank_weight,prcls_bank_weight]
 POSes_weights = [sum(x) for x in POSes_weights]
 
+def fill(inp):
+    res = ''
+    for i in inp:
+        res+=' ' + i
+    return res
+
 """
 def generate_sample_phrase():
     res = ''
@@ -130,16 +136,17 @@ def generate_sample_phrase():
     #print(res)
     return res"""
 #print('checkpoint')
-def soglas_phrase():
+def soglas_phrase(main_word = ''):
     #print('incheck 0')
-    res = ''
-
-    temp = adjfs_bank
-    last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
-    res += ' ' + last_word
-
-    #print('incheck 1',res)
-
+    if main_word == '':
+        res = ''
+        temp = adjfs_bank
+        last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+        res += ' ' + last_word
+        #print('incheck 1',res)
+    else:
+        last_word = main_word
+        res = ' ' + last_word
     temp = nouns_bank + preps_bank
     last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
     res += ' ' + last_word
@@ -154,20 +161,24 @@ def soglas_phrase():
     last_word = temp[-1]
     morfed = morpher.parse(temp[0])[0]
     try:
-        temp[0] = morfed.inflect({morpher.parse(last_word)[0].tag.number,morpher.parse(last_word)[0].tag.gender,morpher.parse(last_word)[0].tag.case})[0]
+        temp[0] = morfed.inflect({morpher.parse(last_word)[0].tag.number, morpher.parse(last_word)[0].tag.gender, morpher.parse(last_word)[0].tag.case})[0]
         res = ''
         for i in temp:
             res += i + ' '
-        return res
+        return res.upper()
     except:
-        return res.lstrip(' ')
+        return res.lstrip(' ').upper()
 
 
-def uprav_phrase():
-    temp = verbs_bank+nouns_bank+advbs_bank+numbs_bank
-    res = ''
-    last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
-    res += last_word
+def uprav_phrase(main_word = ''):
+    if main_word == '':
+        temp = verbs_bank+nouns_bank+advbs_bank+numbs_bank
+        res = ''
+        last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+        res += last_word
+    else:
+        last_word = main_word
+        res = main_word
     if morpher.parse(last_word)[0].tag.POS in ['INFN', 'VERB']:
         temp = preps_bank + prcls_bank+ nouns_bank
         last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
@@ -184,7 +195,7 @@ def uprav_phrase():
         res == ''
         for i in brkn:
             res += i + ' '
-    if morpher.parse(last_word)[0].tag.POS in ['NOUN','NPRO']:
+    elif morpher.parse(last_word)[0].tag.POS in ['NOUN','NPRO','NUMR']:
         temp = nouns_bank + preps_bank
         last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
         res += ' ' + last_word
@@ -198,6 +209,86 @@ def uprav_phrase():
         brkn[-1] = temp.inflect({'gent'})[0]
         for i in brkn:
             res += i + ' '
+    elif morpher.parse(last_word)[0].tag.POS in ['COMP','ADVB']:
+        temp = nouns_bank + preps_bank + verbs_bank + prcls_bank
+        last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+        res += ' ' + last_word
+        if morpher.parse(last_word)[0].tag.POS in ['PRCL','INTJ','PREP']:
+            temp = nouns_bank + verbs_bank
+            last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+            res += ' ' + last_word
+        brkn = res.split()
+        res = ''
+        temp = morpher.parse(brkn[-1])[0]
+        try:
+            brkn[-1] = temp.inflect({'gent'})[0]
+        except: None
+        for i in brkn:
+            res += i + ' '
+    return res.upper()
+
+
+def primik_phrase(main_word = ''):
+    res = ''
+    if main_word == '':
+        temp = nouns_bank + verbs_bank
+        last_word = ''
+        last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+        res += last_word
+    else:
+        last_word = main_word
+        res = last_word
+    if last_word in nouns_bank:
+        temp = verbs_bank + advbs_bank
+        last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+        res += ' ' + last_word
+    else:
+        temp = nouns_bank + advbs_bank
+        last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+        res += ' ' + last_word
     return res
 
-print(uprav_phrase())
+def generate_simple_sentence():
+    temp = VERB_bank + nouns_bank
+    res = ''
+    last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+    res += last_word
+    if last_word in nouns_bank:
+        temp = VERB_bank
+        morfed = morpher.parse(last_word)[0]
+        last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+        try:
+            res = morfed.inflect({'nomn',morpher.parse(last_word)[0].tag.number})[0]
+        except: res = morfed[0]
+        res += ' ' + last_word
+    else:
+        temp = nouns_bank
+        last_word = r.choices(temp, weights=[weig_bank[word_bank.index(x)] for x in temp])[0]
+        morfed = morpher.parse(last_word)[0]
+        try:
+            last_word = morfed.inflect({morpher.parse(res)[0].tag.number,'nomn'})[0]
+        except: last_word = morfed[0]
+        res += ' ' + last_word
+    return res.upper()
+
+
+def generate_full_sentense(leng):
+    mores = [primik_phrase,uprav_phrase,soglas_phrase]
+    res = generate_simple_sentence().split()
+    cnt = 0
+    while cnt<leng:
+        for i in range(len(res)):
+            res[i] = r.choice(mores)(res[i])
+            mdl = []
+            for i in res:
+                mdl+=i.split()
+            res = mdl
+        cnt = len(res)
+    return fill(res).upper().lstrip(' ')
+
+size = r.randint(5,10)
+for i in range(size):
+    print(generate_full_sentense(r.randint(1,7)))
+    if not i == size-1:
+        print('@')
+

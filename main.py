@@ -13,7 +13,7 @@ str_weighs = [159, 454, 170, 298, 94, 165, 121, 349, 440, 321, 670, 281, 473,
 all_letters = (str_letters, sft_letters)
 all_weighs = (str_weighs, sft_weighs)
 
-prepositions = [', a', ', но', ', да', ' и']
+prepositions = [', если', ', даже' ,', будто', ', благо',', a', ', но', ', да', ' и']
 
 
 def generate_syllable():
